@@ -105,17 +105,23 @@ public class MarsEnv extends Environment {
         private MarsModel() {
             super(GSize, GSize, 2);
 
-            // initial location of agents
+            // Initial location of agents
             try {
+
+                // r1
                 setAgPos(0, 0, 0);
 
-                Location r2Loc = new Location(GSize / 2, GSize / 2);
-                setAgPos(1, r2Loc);
+                // r2
+                int x = generateRandom(0, GSize - 1);
+                int y = generateRandom(0, GSize - 1);
+                setAgPos(1, x, y);
+                logger.info("r2(x: " + x + ", y: " + y + ")");
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            // initial location of garbage
+            // Initial location of garbage
             initGarb(GARB_AMOUNT);
 
         }
