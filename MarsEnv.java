@@ -18,7 +18,7 @@ public class MarsEnv extends Environment {
     public static final int GARB = 16; // garbage code in grid model
 
     /** Amount of garbage to add to the environment */
-    public static final int GARB_AMOUNT = 6;
+    public static final int GARB_AMOUNT = 5;
 
     public static final Term ns = Literal.parseLiteral("next(slot)");
     public static final Term pg = Literal.parseLiteral("pick(garb)");
@@ -109,11 +109,14 @@ public class MarsEnv extends Environment {
             try {
 
                 // r1
-                setAgPos(0, 0, 0);
-
-                // r2
                 int x = generateRandom(0, GSize - 1);
                 int y = generateRandom(0, GSize - 1);
+                setAgPos(0, x, y);
+                logger.info("r1(x: " + x + ", y: " + y + ")");
+
+                // r2
+                x = generateRandom(0, GSize - 1);
+                y = generateRandom(0, GSize - 1);
                 setAgPos(1, x, y);
                 logger.info("r2(x: " + x + ", y: " + y + ")");
 
