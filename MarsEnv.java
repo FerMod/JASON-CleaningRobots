@@ -183,7 +183,7 @@ public class MarsEnv extends Environment {
             super(model, "Mars World", 600);
             defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
             setVisible(true);
-            repaint();
+            // repaint();
         }
 
         /** draw application objects */
@@ -214,7 +214,7 @@ public class MarsEnv extends Environment {
                 g.setColor(Color.white);
             }
             super.drawString(g, x, y, defaultFont, label);
-            repaint();
+            // repaint();
         }
 
         public void drawGarb(Graphics g, int x, int y) {
