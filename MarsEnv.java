@@ -10,41 +10,46 @@ import java.awt.Graphics;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class MarsEnv extends Environment {
 
     public static final int GSize = 7; // grid size
-    public static final int GARB  = 16; // garbage code in grid model
+    public static final int GARB = 16; // garbage code in grid model
 
-    public static final Term    ns = Literal.parseLiteral("next(slot)");
-    public static final Term    pg = Literal.parseLiteral("pick(garb)");
-    public static final Term    dg = Literal.parseLiteral("drop(garb)");
-    public static final Term    bg = Literal.parseLiteral("burn(garb)");
+    /** Amount of garbage to add to the environment */
+    public static final int GARB_AMOUNT = 5;
+
+    public static final Term ns = Literal.parseLiteral("next(slot)");
+    public static final Term pg = Literal.parseLiteral("pick(garb)");
+    public static final Term dg = Literal.parseLiteral("drop(garb)");
+    public static final Term bg = Literal.parseLiteral("burn(garb)");
     public static final Literal g1 = Literal.parseLiteral("garbage(r1)");
     public static final Literal g2 = Literal.parseLiteral("garbage(r2)");
 
     static Logger logger = Logger.getLogger(MarsEnv.class.getName());
 
     private MarsModel model;
-    private MarsView  view;
+    private MarsView view;
 
     @Override
     public void init(String[] args) {
         model = new MarsModel();
-        view  = new MarsView(model);
+        view = new MarsView(model);
         model.setView(view);
         updatePercepts();
     }
 
     @Override
     public boolean executeAction(String ag, Structure action) {
-        logger.info(ag+" doing: "+ action);
+        logger.info(ag + " doing: " + action);
         try {
             if (action.equals(ns)) {
                 model.nextSlot();
             } else if (action.getFunctor().equals("move_towards")) {
-                int x = (int)((NumberTerm)action.getTerm(0)).solve();
-                int y = (int)((NumberTerm)action.getTerm(1)).solve();
-                model.moveTowards(x,y);
+                int x = (int) ((NumberTerm) action.getTerm(0)).solve();
+                int y = (int) ((NumberTerm) action.getTerm(1)).solve();
+                model.moveTowards(x, y);
             } else if (action.equals(pg)) {
                 model.pickGarb();
             } else if (action.equals(dg)) {
@@ -62,7 +67,8 @@ public class MarsEnv extends Environment {
 
         try {
             Thread.sleep(200);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
         informAgsEnvironmentChanged();
         return true;
     }
@@ -99,22 +105,51 @@ public class MarsEnv extends Environment {
         private MarsModel() {
             super(GSize, GSize, 2);
 
-            // initial location of agents
+            // Initial location of agents
             try {
-                setAgPos(0, 0, 0);
 
-                Location r2Loc = new Location(GSize/2, GSize/2);
-                setAgPos(1, r2Loc);
+                // r1
+                int x = generateRandom(0, GSize - 1);
+                int y = generateRandom(0, GSize - 1);
+                setAgPos(0, x, y);
+                logger.info("r1(x: " + x + ", y: " + y + ")");
+
+                // r2
+                x = generateRandom(0, GSize - 1);
+                y = generateRandom(0, GSize - 1);
+                setAgPos(1, x, y);
+                logger.info("r2(x: " + x + ", y: " + y + ")");
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            // initial location of garbage
-            add(GARB, 3, 0);
-            add(GARB, GSize-1, 0);
-            add(GARB, 1, 2);
-            add(GARB, 0, GSize-2);
-            add(GARB, GSize-1, GSize-1);
+            // Initial location of garbage
+            initGarb(GARB_AMOUNT);
+
+        }
+
+        private void initGarb(int num) {
+
+            int i = 0;
+            while (i < num) {
+
+                int x = generateRandom(0, GSize - 1);
+                int y = generateRandom(0, GSize - 1);
+                logger.info("x: " + x + ", y: " + y);
+                logger.info("hasObject(GARB, x, y): " + hasObject(GARB, x, y));
+                if (!hasObject(GARB, x, y)) {
+                    add(GARB, x, y);
+                    i++;
+                }
+
+            }
+
+        }
+
+        private int generateRandom(int min, int max) {
+            return ThreadLocalRandom.current().nextInt(min, max + 1);
+            // return random.nextInt(GSize); // Old way of generating random int
         }
 
         void nextSlot() throws Exception {
@@ -160,12 +195,14 @@ public class MarsEnv extends Environment {
                 }
             }
         }
+
         void dropGarb() {
             if (r1HasGarb) {
                 r1HasGarb = false;
                 add(GARB, getAgPos(0));
             }
         }
+
         void burnGarb() {
             // r2 location has garbage
             if (model.hasObject(GARB, getAgPos(1))) {
@@ -180,7 +217,7 @@ public class MarsEnv extends Environment {
             super(model, "Mars World", 600);
             defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
             setVisible(true);
-            repaint();
+            // repaint();
         }
 
         /** draw application objects */
@@ -195,11 +232,11 @@ public class MarsEnv extends Environment {
 
         @Override
         public void drawAgent(Graphics g, int x, int y, Color c, int id) {
-            String label = "R"+(id+1);
+            String label = "R" + (id + 1);
             c = Color.blue;
             if (id == 0) {
                 c = Color.yellow;
-                if (((MarsModel)model).r1HasGarb) {
+                if (((MarsModel) model).r1HasGarb) {
                     label += " - G";
                     c = Color.orange;
                 }
@@ -211,7 +248,7 @@ public class MarsEnv extends Environment {
                 g.setColor(Color.white);
             }
             super.drawString(g, x, y, defaultFont, label);
-            repaint();
+            // repaint();
         }
 
         public void drawGarb(Graphics g, int x, int y) {
