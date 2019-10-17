@@ -107,6 +107,7 @@ public class MarsEnv extends Environment {
 
             // initial location of agents
             try {
+                setAgPos(0, 0, 0);
 
                 Location r2Loc = new Location(GSize / 2, GSize / 2);
                 setAgPos(1, r2Loc);
