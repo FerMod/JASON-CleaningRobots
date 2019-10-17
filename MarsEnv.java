@@ -10,10 +10,15 @@ import java.awt.Graphics;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class MarsEnv extends Environment {
 
     public static final int GSize = 7; // grid size
     public static final int GARB = 16; // garbage code in grid model
+
+    /** Amount of garbage to add to the environment */
+    public static final int GARB_AMOUNT = 6;
 
     public static final Term ns = Literal.parseLiteral("next(slot)");
     public static final Term pg = Literal.parseLiteral("pick(garb)");
@@ -102,7 +107,6 @@ public class MarsEnv extends Environment {
 
             // initial location of agents
             try {
-                setAgPos(0, 0, 0);
 
                 Location r2Loc = new Location(GSize / 2, GSize / 2);
                 setAgPos(1, r2Loc);
@@ -111,11 +115,31 @@ public class MarsEnv extends Environment {
             }
 
             // initial location of garbage
-            add(GARB, 3, 0);
-            add(GARB, GSize - 1, 0);
-            add(GARB, 1, 2);
-            add(GARB, 0, GSize - 2);
-            add(GARB, GSize - 1, GSize - 1);
+            initGarb(GARB_AMOUNT);
+
+        }
+
+        private void initGarb(int num) {
+
+            int i = 0;
+            while (i < num) {
+
+                int x = generateRandom(0, GSize - 1);
+                int y = generateRandom(0, GSize - 1);
+                logger.info("x: " + x + ", y: " + y);
+                logger.info("hasObject(GARB, x, y): " + hasObject(GARB, x, y));
+                if (!hasObject(GARB, x, y)) {
+                    add(GARB, x, y);
+                    i++;
+                }
+
+            }
+
+        }
+
+        private int generateRandom(int min, int max) {
+            return ThreadLocalRandom.current().nextInt(min, max + 1);
+            // return random.nextInt(GSize); // Old way of generating random int
         }
 
         void nextSlot() throws Exception {
