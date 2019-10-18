@@ -174,7 +174,7 @@ public class MarsEnv extends Environment {
 
             // Finished searching the whole grid
             if (pos.y == getHeight()) {
-                return;
+                pos.y = 0;
             }
 
             setAgPos(ag, pos);
@@ -192,7 +192,7 @@ public class MarsEnv extends Environment {
             }
 
             if (pos.x == getWidth()) {
-                return;
+                pos.x = 0;
             }
 
             setAgPos(ag, pos);
