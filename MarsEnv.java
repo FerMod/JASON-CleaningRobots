@@ -157,18 +157,46 @@ public class MarsEnv extends Environment {
         }
 
         void nextSlot() throws Exception {
-            Location r1 = getAgPos(0);
-            r1.x++;
-            if (r1.x == getWidth()) {
-                r1.x = 0;
-                r1.y++;
+            // leftRightSearch(0);
+            topDownSearch(0);
+            setAgPos(1, getAgPos(1)); // just to draw it in the view
+        }
+
+        private void leftRightSearch(int ag) {
+
+            Location pos = getAgPos(ag);
+            pos.x++;
+
+            if (pos.x == getWidth()) {
+                pos.x = 0;
+                pos.y++;
             }
-            // finished searching the whole grid
-            if (r1.y == getHeight()) {
+
+            // Finished searching the whole grid
+            if (pos.y == getHeight()) {
                 return;
             }
-            setAgPos(0, r1);
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
+
+            setAgPos(ag, pos);
+
+        }
+
+        private void topDownSearch(int ag) {
+
+            Location pos = getAgPos(ag);
+            pos.y++;
+
+            if (pos.y == getHeight()) {
+                pos.y = 0;
+                pos.x++;
+            }
+
+            if (pos.x == getWidth()) {
+                return;
+            }
+
+            setAgPos(ag, pos);
+
         }
 
         void moveTowards(int x, int y) throws Exception {
