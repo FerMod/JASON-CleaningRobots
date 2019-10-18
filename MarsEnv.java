@@ -97,8 +97,11 @@ public class MarsEnv extends Environment {
     class MarsModel extends GridWorldModel {
 
         public static final int MErr = 2; // max error in pick garb
-        int nerr; // number of tries of pick garb
+        int nerr = 0; // number of tries of pick garb
         boolean r1HasGarb = false; // whether r1 is carrying garbage or not
+
+        /** Number of tries of burning garb */
+        int nBurnErr = 0;
 
         Random random = new Random(System.currentTimeMillis());
 
@@ -138,6 +141,7 @@ public class MarsEnv extends Environment {
                 int y = generateRandom(0, GSize - 1);
                 logger.info("x: " + x + ", y: " + y);
                 logger.info("hasObject(GARB, x, y): " + hasObject(GARB, x, y));
+
                 if (!hasObject(GARB, x, y)) {
                     add(GARB, x, y);
                     i++;
@@ -184,8 +188,7 @@ public class MarsEnv extends Environment {
         void pickGarb() {
             // r1 location has garbage
             if (model.hasObject(GARB, getAgPos(0))) {
-                // sometimes the "picking" action doesn't work
-                // but never more than MErr times
+                // Sometimes the action doesnt work, but never more than MErr times
                 if (random.nextBoolean() || nerr == MErr) {
                     remove(GARB, getAgPos(0));
                     nerr = 0;
@@ -206,9 +209,17 @@ public class MarsEnv extends Environment {
         void burnGarb() {
             // r2 location has garbage
             if (model.hasObject(GARB, getAgPos(1))) {
-                remove(GARB, getAgPos(1));
+                if (random.nextBoolean() || nBurnErr == MErr) {
+                    remove(GARB, getAgPos(1));
+                    nBurnErr = 0;
+                    logger.info("r2 burn SUCCESS (nBurnErr: " + nBurnErr + ")");
+                } else {
+                    nBurnErr++;
+                    logger.info("r2 burn FAILED (nBurnErr: " + nBurnErr + ")");
+                }
             }
         }
+
     }
 
     class MarsView extends GridWorldView {
