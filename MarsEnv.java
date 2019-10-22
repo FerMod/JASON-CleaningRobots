@@ -97,8 +97,11 @@ public class MarsEnv extends Environment {
     class MarsModel extends GridWorldModel {
 
         public static final int MErr = 2; // max error in pick garb
-        int nerr; // number of tries of pick garb
+        int nerr = 0; // number of tries of pick garb
         boolean r1HasGarb = false; // whether r1 is carrying garbage or not
+
+        /** Number of tries of burning garb */
+        int nBurnErr = 0;
 
         Random random = new Random(System.currentTimeMillis());
 
@@ -138,6 +141,7 @@ public class MarsEnv extends Environment {
                 int y = generateRandom(0, GSize - 1);
                 logger.info("x: " + x + ", y: " + y);
                 logger.info("hasObject(GARB, x, y): " + hasObject(GARB, x, y));
+
                 if (!hasObject(GARB, x, y)) {
                     add(GARB, x, y);
                     i++;
@@ -153,18 +157,46 @@ public class MarsEnv extends Environment {
         }
 
         void nextSlot() throws Exception {
-            Location r1 = getAgPos(0);
-            r1.x++;
-            if (r1.x == getWidth()) {
-                r1.x = 0;
-                r1.y++;
-            }
-            // finished searching the whole grid
-            if (r1.y == getHeight()) {
-                return;
-            }
-            setAgPos(0, r1);
+            // leftRightSearch(0);
+            topDownSearch(0);
             setAgPos(1, getAgPos(1)); // just to draw it in the view
+        }
+
+        private void leftRightSearch(int ag) {
+
+            Location pos = getAgPos(ag);
+            pos.x++;
+
+            if (pos.x == getWidth()) {
+                pos.x = 0;
+                pos.y++;
+            }
+
+            // Finished searching the whole grid
+            if (pos.y == getHeight()) {
+                pos.y = 0;
+            }
+
+            setAgPos(ag, pos);
+
+        }
+
+        private void topDownSearch(int ag) {
+
+            Location pos = getAgPos(ag);
+            pos.y++;
+
+            if (pos.y == getHeight()) {
+                pos.y = 0;
+                pos.x++;
+            }
+
+            if (pos.x == getWidth()) {
+                pos.x = 0;
+            }
+
+            setAgPos(ag, pos);
+
         }
 
         void moveTowards(int x, int y) throws Exception {
@@ -184,8 +216,7 @@ public class MarsEnv extends Environment {
         void pickGarb() {
             // r1 location has garbage
             if (model.hasObject(GARB, getAgPos(0))) {
-                // sometimes the "picking" action doesn't work
-                // but never more than MErr times
+                // Sometimes the action doesnt work, but never more than MErr times
                 if (random.nextBoolean() || nerr == MErr) {
                     remove(GARB, getAgPos(0));
                     nerr = 0;
@@ -206,9 +237,17 @@ public class MarsEnv extends Environment {
         void burnGarb() {
             // r2 location has garbage
             if (model.hasObject(GARB, getAgPos(1))) {
-                remove(GARB, getAgPos(1));
+                if (random.nextBoolean() || nBurnErr == MErr) {
+                    remove(GARB, getAgPos(1));
+                    nBurnErr = 0;
+                    logger.info("r2 burn SUCCESS (nBurnErr: " + nBurnErr + ")");
+                } else {
+                    nBurnErr++;
+                    logger.info("r2 burn FAILED (nBurnErr: " + nBurnErr + ")");
+                }
             }
         }
+
     }
 
     class MarsView extends GridWorldView {
