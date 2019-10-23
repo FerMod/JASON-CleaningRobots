@@ -17,6 +17,16 @@ public class MarsEnv extends Environment {
     public static final int GSize = 7; // grid size
     public static final int GARB = 16; // garbage code in grid model
 
+    /** Amount of garbage to add to the environment */
+    public static final int GARB_AMOUNT = 5;
+
+    enum SearchType {
+        LEFT_RIGHT, TOP_DOWN, ZIG_ZAG_LEFT_RIGHT, ZIG_ZAG_TOP_DOWN
+    }
+
+    /** Type of search that will follow the agent */
+    public static SearchType SEARCH_TYPE = SearchType.ZIG_ZAG_TOP_DOWN;
+
     public static final Term ns = Literal.parseLiteral("next(slot)");
     public static final Term ns3 = Literal.parseLiteral("nextr3(slot)");
     public static final Term pg = Literal.parseLiteral("pick(garb)");
@@ -104,6 +114,11 @@ public class MarsEnv extends Environment {
         int burnerror; // number of tries to burn trash
         boolean r1HasGarb = false; // whether r1 is carrying garbage or not
 
+        /** Number of tries of burning garb */
+        int nBurnErr = 0;
+
+        boolean reverse = false;
+
         Random random = new Random(System.currentTimeMillis());
 
         private MarsModel() {
@@ -111,45 +126,71 @@ public class MarsEnv extends Environment {
 
             // initial location of agents
             try {
-                Location r1Loc = new Location(randomNumber(), randomNumber());
+
+                int x = randomNumber(0, GSize - 1);
+                int y = randomNumber(0, GSize - 1);
+                Location r1Loc = new Location(x, y);
                 setAgPos(0, r1Loc);
 
-                Location r2Loc = new Location(randomNumber(), randomNumber());
+                x = randomNumber(0, GSize - 1);
+                y = randomNumber(0, GSize - 1);
+                Location r2Loc = new Location(x, y);
                 setAgPos(1, r2Loc);
 
-                Location r3Loc = new Location(randomNumber(), randomNumber());
+                x = randomNumber(0, GSize - 1);
+                y = randomNumber(0, GSize - 1);
+                Location r3Loc = new Location(x, y);
                 setAgPos(2, r3Loc);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            // initial location of garbage
-            add(GARB, randomNumber(), randomNumber());
-            add(GARB, randomNumber(), randomNumber());
-            add(GARB, randomNumber(), randomNumber());
-            add(GARB, randomNumber(), randomNumber());
-            add(GARB, randomNumber(), randomNumber());
+            // Initial location of garbage
+            initGarb(GARB_AMOUNT);
         }
 
-        int randomNumber() {
-            return ThreadLocalRandom.current().nextInt(0, GSize);
+        void initGarb(int num) {
+
+            int i = 0;
+            while (i < num) {
+
+                int x = randomNumber(0, GSize - 1);
+                int y = randomNumber(0, GSize - 1);
+
+                if (!hasObject(GARB, x, y)) {
+                    add(GARB, x, y);
+                    i++;
+                }
+
+            }
+
+        }
+
+        int randomNumber(int min, int max) {
+            return ThreadLocalRandom.current().nextInt(min, max + 1);
         }
 
         void nextSlot() throws Exception {
-            Location r1 = getAgPos(0);
-            r1.y++;
-            if (r1.y == getHeight()) {
-                r1.y = 0;
-                r1.x++;
+
+            switch (SEARCH_TYPE) {
+            case TOP_DOWN:
+                leftRightSearch();
+                break;
+            case LEFT_RIGHT:
+                topDownSearch();
+                break;
+            case ZIG_ZAG_LEFT_RIGHT:
+                zigZagLeftRightSearch();
+                break;
+            case ZIG_ZAG_TOP_DOWN:
+            default:
+                zigZagTopDownSearch();
+                break;
             }
-            // finished searching the whole grid
-            if (r1.x == getWidth()) {
-                r1.x = 0;
-                r1.y = 0;
-            }
-            setAgPos(0, r1);
+
             setAgPos(1, getAgPos(1)); // just to draw it in the view
-            setAgPos(2, getAgPos(2));
+
         }
 
         void nextSlotR3() throws Exception {
@@ -198,17 +239,132 @@ public class MarsEnv extends Environment {
             }
         }
 
+        void leftRightSearch() {
+
+            Location pos = getAgPos(0);
+            pos.x++;
+
+            if (pos.x == getWidth()) {
+                pos.x = 0;
+                pos.y++;
+            }
+
+            // Finished searching the whole grid
+            if (pos.y == getHeight()) {
+                pos.y = 0;
+            }
+
+            setAgPos(0, pos);
+            setAgPos(1, getAgPos(1)); // just to draw it in the view
+            setAgPos(2, getAgPos(2));
+
+        }
+
+        void topDownSearch() {
+
+            Location pos = getAgPos(0);
+            pos.y++;
+
+            if (pos.y == getHeight()) {
+                pos.y = 0;
+                pos.x++;
+            }
+
+            if (pos.x == getWidth()) {
+                pos.x = 0;
+            }
+
+            setAgPos(0, pos);
+            setAgPos(1, getAgPos(1)); // just to draw it in the view
+            setAgPos(2, getAgPos(2));
+
+        }
+
+        void zigZagLeftRightSearch() {
+
+            Location pos = getAgPos(0);
+
+            if (reverse) {
+                // Check if it reached the extreme
+                if (pos.x == 0) {
+                    reverse = false;
+                    pos.y++;
+                } else {
+                    pos.x--;
+                }
+            } else {
+                // Check if it reached the extreme
+                if (pos.x == getWidth() - 1) {
+                    reverse = true;
+                    pos.y++;
+                } else {
+                    pos.x++;
+                }
+            }
+
+            if (pos.y == getHeight()) {
+                pos.x = 0;
+                pos.y = 0;
+                reverse = false;
+            }
+
+            setAgPos(0, pos);
+            setAgPos(1, getAgPos(1)); // just to draw it in the view
+            setAgPos(2, getAgPos(2));
+
+        }
+
+        void zigZagTopDownSearch() {
+
+            Location pos = getAgPos(0);
+
+            if (reverse) {
+                // Check if it reached the extreme
+                if (pos.y == 0) {
+                    reverse = false;
+                    pos.x++;
+                } else {
+                    pos.y--;
+                }
+            } else {
+                // Check if it reached the extreme
+                if (pos.y == getHeight() - 1) {
+                    reverse = true;
+                    pos.x++;
+                } else {
+                    pos.y++;
+                }
+            }
+
+            if (pos.x == getHeight()) {
+                pos.x = 0;
+                pos.y = 0;
+                reverse = false;
+            }
+
+            setAgPos(0, pos);
+            setAgPos(1, getAgPos(1)); // just to draw it in the view
+            setAgPos(2, getAgPos(2));
+
+        }
+
         void moveTowards(int x, int y) throws Exception {
-            Location r1 = getAgPos(0);
-            if (r1.x < x)
-                r1.x++;
-            else if (r1.x > x)
-                r1.x--;
-            if (r1.y < y)
-                r1.y++;
-            else if (r1.y > y)
-                r1.y--;
-            setAgPos(0, r1);
+
+            Location pos = getAgPos(0);
+
+            if (pos.x < x) {
+                pos.x++;
+            } else if (pos.x > x) {
+                pos.x--;
+            }
+
+            if (pos.y < y) {
+                pos.y++;
+            } else if (pos.y > y) {
+                pos.y--;
+            }
+
+            setAgPos(0, pos);
             setAgPos(1, getAgPos(1)); // just to draw it in the view
             setAgPos(2, getAgPos(2));
         }
