@@ -4,16 +4,16 @@ A modification of one of the examples given in the [Jason](https://github.com/ja
 
 ## Tasks
 
-1) Include more indeterminism in the environment:
-  a) Randomly scattering some pieces of garbage on the grid. [link][Task_1a]
-  b) Randomly placing the incinerator (together with r2) on the grid. [link][Task_1b]
-  c) Randomly placing r1 on the grid. [link][Task_1c]
-2) Modify r2 agent to fail as r1 when picking up the garbage. [link][Task_2]
-3) Modify r1 agent for changing its searching path:
-  a) Scanning top-down instead of left-right. [link][Task_3a]
-  b) Scanning continuously. [link][Task_3b]
-4) Include a new crazy Robot r3 that moves and produces garbage randomly. [link][Task_4]
-5) Include a new task at your choice. [link][Task_5]
+1. Include more indeterminism in the environment:  
+  a. Randomly scattering some pieces of garbage on the grid. [link][Task_1a]  
+  b. Randomly placing the incinerator (together with r2) on the grid. [link][Task_1b]  
+  c. Randomly placing r1 on the grid. [link][Task_1c]
+2. Modify r2 agent to fail as r1 when picking up the garbage. [link][Task_2]  
+3. Modify r1 agent for changing its searching path:  
+  a. Scanning top-down instead of left-right. [link][Task_3a]  
+  b. Scanning continuously. [link][Task_3b]  
+4. Include a new crazy Robot r3 that moves and produces garbage randomly. [link][Task_4]
+5. Include a new task at your choice. [link][Task_5]
 
 [Task_1a]: https://github.com/FerMod/JASON-CleaningRobots/commit/b0c4519334e156f35a13aad4626f1cc074f37309
 [Task_1b]: https://github.com/FerMod/JASON-CleaningRobots/commit/91f8fab8efdd6570211159c830aa57dd4707f5a5
