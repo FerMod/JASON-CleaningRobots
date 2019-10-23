@@ -15,11 +15,11 @@ A modification of one of the examples given in the [Jason](https://github.com/ja
 4. Include a new crazy Robot r3 that moves and produces garbage randomly. [link][Task_4]
 5. Include a new task at your choice. [link][Task_5]
 
-[Task_1a]: https://github.com/FerMod/JASON-CleaningRobots/compare/b0c4519..91f8fab
-[Task_1b]: https://github.com/FerMod/JASON-CleaningRobots/compare/91f8fab..cd49e0d
-[Task_1c]: https://github.com/FerMod/JASON-CleaningRobots/compare/cd49e0d.dced7ef
-[Task_2]: https://github.com/FerMod/JASON-CleaningRobots/compare/dced7ef..17eace0
-[Task_3a]: https://github.com/FerMod/JASON-CleaningRobots/compare/17eace0..e0cb314
-[Task_3b]: https://github.com/FerMod/JASON-CleaningRobots/compare/e0cb314..HEAD
-[Task_4]: https://github.com/FerMod/JASON-CleaningRobots/compare/
-[Task_5]: https://github.com/FerMod/JASON-CleaningRobots/compare/
+[Task_1a]: https://github.com/FerMod/JASON-CleaningRobots/compare/605f802..b0c4519
+[Task_1b]: https://github.com/FerMod/JASON-CleaningRobots/compare/b0c4519..91f8fab
+[Task_1c]:https://github.com/FerMod/JASON-CleaningRobots/compare/91f8fab..cd49e0d
+[Task_2]: https://github.com/FerMod/JASON-CleaningRobots/compare/cd49e0d.dced7ef
+[Task_3a]: https://github.com/FerMod/JASON-CleaningRobots/compare/dced7ef..17eace0
+[Task_3b]: https://github.com/FerMod/JASON-CleaningRobots/compare/17eace0..e0cb314
+[Task_4]: https://github.com/FerMod/JASON-CleaningRobots/compare/e0cb314..b290596
+[Task_5]: https://github.com/FerMod/JASON-CleaningRobots/compare/b290596..HEAD
