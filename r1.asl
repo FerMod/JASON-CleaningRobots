@@ -20,9 +20,8 @@ at(P) :- pos(P,X,Y) & pos(r1,X,Y).
 +garbage(r1) : not .desire(carry_to(r2))
    <- !carry_to(r2).
 
-+!carry_to(R)
++!carry_to(R): pos(r1,X,Y)
    <- // remember where to go back
-      ?pos(r1,X,Y);
       -+pos(last,X,Y);
 
       // carry garbage to r2
@@ -31,6 +30,7 @@ at(P) :- pos(P,X,Y) & pos(r1,X,Y).
       // goes back and continue to check
       !at(last);
       !check(slots).
++!carry_to(R) <- !carry_to(R).
 
 +!take(S,L) : true
    <- !ensure_pick(S);
@@ -43,6 +43,8 @@ at(P) :- pos(P,X,Y) & pos(r1,X,Y).
 +!ensure_pick(_).
 
 +!at(L) : at(L).
-+!at(L) <- ?pos(L,X,Y);
-           move_towards(X,Y);
++!at(L) : pos(L,X,Y) <- 
+		   move_towards(X,Y);
            !at(L).
++!at(L) <- !at(L).
+		   

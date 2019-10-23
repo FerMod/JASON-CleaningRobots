@@ -4,23 +4,21 @@ import jason.environment.grid.GridWorldModel;
 import jason.environment.grid.GridWorldView;
 import jason.environment.grid.Location;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.util.Random;
 import java.util.logging.Logger;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 public class MarsEnv extends Environment {
 
     public static final int GSize = 7; // grid size
     public static final int GARB = 16; // garbage code in grid model
 
-    /** Amount of garbage to add to the environment */
-    public static final int GARB_AMOUNT = 5;
-
     public static final Term ns = Literal.parseLiteral("next(slot)");
+    public static final Term ns3 = Literal.parseLiteral("nextr3(slot)");
     public static final Term pg = Literal.parseLiteral("pick(garb)");
     public static final Term dg = Literal.parseLiteral("drop(garb)");
     public static final Term bg = Literal.parseLiteral("burn(garb)");
@@ -46,6 +44,8 @@ public class MarsEnv extends Environment {
         try {
             if (action.equals(ns)) {
                 model.nextSlot();
+            } else if (action.equals(ns3)) {
+                model.nextSlotR3();
             } else if (action.getFunctor().equals("move_towards")) {
                 int x = (int) ((NumberTerm) action.getTerm(0)).solve();
                 int y = (int) ((NumberTerm) action.getTerm(1)).solve();
@@ -79,12 +79,15 @@ public class MarsEnv extends Environment {
 
         Location r1Loc = model.getAgPos(0);
         Location r2Loc = model.getAgPos(1);
+        Location r3Loc = model.getAgPos(2);
 
         Literal pos1 = Literal.parseLiteral("pos(r1," + r1Loc.x + "," + r1Loc.y + ")");
         Literal pos2 = Literal.parseLiteral("pos(r2," + r2Loc.x + "," + r2Loc.y + ")");
+        Literal pos3 = Literal.parseLiteral("pos(r3," + r3Loc.x + "," + r3Loc.y + ")");
 
         addPercept(pos1);
         addPercept(pos2);
+        addPercept(pos3);
 
         if (model.hasObject(GARB, r1Loc)) {
             addPercept(g1);
@@ -96,107 +99,103 @@ public class MarsEnv extends Environment {
 
     class MarsModel extends GridWorldModel {
 
-        public static final int MErr = 2; // max error in pick garb
-        int nerr = 0; // number of tries of pick garb
+        public static final int MErr = 20; // max error in pick garb and burn garb
+        int nerr; // number of tries of pick garb
+        int burnerror; // number of tries to burn trash
         boolean r1HasGarb = false; // whether r1 is carrying garbage or not
-
-        /** Number of tries of burning garb */
-        int nBurnErr = 0;
 
         Random random = new Random(System.currentTimeMillis());
 
         private MarsModel() {
-            super(GSize, GSize, 2);
+            super(GSize, GSize, 3);
 
-            // Initial location of agents
+            // initial location of agents
             try {
+                Location r1Loc = new Location(randomNumber(), randomNumber());
+                setAgPos(0, r1Loc);
 
-                // r1
-                int x = generateRandom(0, GSize - 1);
-                int y = generateRandom(0, GSize - 1);
-                setAgPos(0, x, y);
-                logger.info("r1(x: " + x + ", y: " + y + ")");
+                Location r2Loc = new Location(randomNumber(), randomNumber());
+                setAgPos(1, r2Loc);
 
-                // r2
-                x = generateRandom(0, GSize - 1);
-                y = generateRandom(0, GSize - 1);
-                setAgPos(1, x, y);
-                logger.info("r2(x: " + x + ", y: " + y + ")");
-
+                Location r3Loc = new Location(randomNumber(), randomNumber());
+                setAgPos(2, r3Loc);
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            // Initial location of garbage
-            initGarb(GARB_AMOUNT);
-
+            // initial location of garbage
+            add(GARB, randomNumber(), randomNumber());
+            add(GARB, randomNumber(), randomNumber());
+            add(GARB, randomNumber(), randomNumber());
+            add(GARB, randomNumber(), randomNumber());
+            add(GARB, randomNumber(), randomNumber());
         }
 
-        private void initGarb(int num) {
-
-            int i = 0;
-            while (i < num) {
-
-                int x = generateRandom(0, GSize - 1);
-                int y = generateRandom(0, GSize - 1);
-                logger.info("x: " + x + ", y: " + y);
-                logger.info("hasObject(GARB, x, y): " + hasObject(GARB, x, y));
-
-                if (!hasObject(GARB, x, y)) {
-                    add(GARB, x, y);
-                    i++;
-                }
-
-            }
-
-        }
-
-        private int generateRandom(int min, int max) {
-            return ThreadLocalRandom.current().nextInt(min, max + 1);
-            // return random.nextInt(GSize); // Old way of generating random int
+        int randomNumber() {
+            return ThreadLocalRandom.current().nextInt(0, GSize);
         }
 
         void nextSlot() throws Exception {
-            // leftRightSearch(0);
-            topDownSearch(0);
+            Location r1 = getAgPos(0);
+            r1.y++;
+            if (r1.y == getHeight()) {
+                r1.y = 0;
+                r1.x++;
+            }
+            // finished searching the whole grid
+            if (r1.x == getWidth()) {
+                r1.x = 0;
+                r1.y = 0;
+            }
+            setAgPos(0, r1);
             setAgPos(1, getAgPos(1)); // just to draw it in the view
+            setAgPos(2, getAgPos(2));
         }
 
-        private void leftRightSearch(int ag) {
-
-            Location pos = getAgPos(ag);
-            pos.x++;
-
-            if (pos.x == getWidth()) {
-                pos.x = 0;
-                pos.y++;
+        void nextSlotR3() throws Exception {
+            Location r3 = getAgPos(2);
+            int row = ThreadLocalRandom.current().nextInt(0, 3);
+            int column = ThreadLocalRandom.current().nextInt(0, 3);
+            moveChoice(row, column, r3);
+            // 25% of droping garbage
+            if (ThreadLocalRandom.current().nextInt(0, 10) == 0) {
+                add(GARB, r3);
             }
-
-            // Finished searching the whole grid
-            if (pos.y == getHeight()) {
-                pos.y = 0;
-            }
-
-            setAgPos(ag, pos);
-
+            setAgPos(0, getAgPos(0));
+            setAgPos(1, getAgPos(1)); // just to draw it in the view
+            setAgPos(2, r3);
         }
 
-        private void topDownSearch(int ag) {
-
-            Location pos = getAgPos(ag);
-            pos.y++;
-
-            if (pos.y == getHeight()) {
-                pos.y = 0;
-                pos.x++;
+        // r3 agents move decision
+        void moveChoice(int row, int column, Location l) {
+            switch (row) {
+            case 0:
+                l.x--;
+                if (l.x < 0)
+                    l.x = 1;
+                break;
+            case 2:
+                l.x++;
+                if (l.x >= GSize)
+                    l.x = GSize - 1;
+                break;
+            default:
+                break;
             }
-
-            if (pos.x == getWidth()) {
-                pos.x = 0;
+            switch (column) {
+            case 0:
+                l.y--;
+                if (l.y < 0)
+                    l.y = 1;
+                break;
+            case 2:
+                l.y++;
+                if (l.y >= GSize)
+                    l.y = GSize - 1;
+                break;
+            default:
+                break;
             }
-
-            setAgPos(ag, pos);
-
         }
 
         void moveTowards(int x, int y) throws Exception {
@@ -211,12 +210,14 @@ public class MarsEnv extends Environment {
                 r1.y--;
             setAgPos(0, r1);
             setAgPos(1, getAgPos(1)); // just to draw it in the view
+            setAgPos(2, getAgPos(2));
         }
 
         void pickGarb() {
             // r1 location has garbage
             if (model.hasObject(GARB, getAgPos(0))) {
-                // Sometimes the action doesnt work, but never more than MErr times
+                // sometimes the "picking" action doesn't work
+                // but never more than MErr times
                 if (random.nextBoolean() || nerr == MErr) {
                     remove(GARB, getAgPos(0));
                     nerr = 0;
@@ -237,17 +238,14 @@ public class MarsEnv extends Environment {
         void burnGarb() {
             // r2 location has garbage
             if (model.hasObject(GARB, getAgPos(1))) {
-                if (random.nextBoolean() || nBurnErr == MErr) {
+                if (random.nextBoolean() || burnerror == MErr) {
                     remove(GARB, getAgPos(1));
-                    nBurnErr = 0;
-                    logger.info("r2 burn SUCCESS (nBurnErr: " + nBurnErr + ")");
+                    burnerror = 0;
                 } else {
-                    nBurnErr++;
-                    logger.info("r2 burn FAILED (nBurnErr: " + nBurnErr + ")");
+                    burnerror++;
                 }
             }
         }
-
     }
 
     class MarsView extends GridWorldView {
@@ -256,7 +254,7 @@ public class MarsEnv extends Environment {
             super(model, "Mars World", 600);
             defaultFont = new Font("Arial", Font.BOLD, 18); // change default font
             setVisible(true);
-            // repaint();
+            repaint();
         }
 
         /** draw application objects */
@@ -280,6 +278,9 @@ public class MarsEnv extends Environment {
                     c = Color.orange;
                 }
             }
+            if (id == 2) {
+                c = Color.red;
+            }
             super.drawAgent(g, x, y, c, -1);
             if (id == 0) {
                 g.setColor(Color.black);
@@ -287,7 +288,7 @@ public class MarsEnv extends Environment {
                 g.setColor(Color.white);
             }
             super.drawString(g, x, y, defaultFont, label);
-            // repaint();
+            repaint(0);
         }
 
         public void drawGarb(Graphics g, int x, int y) {
