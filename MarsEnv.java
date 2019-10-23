@@ -21,11 +21,11 @@ public class MarsEnv extends Environment {
     public static final int GARB_AMOUNT = 5;
 
     enum SearchType {
-        LEFT_RIGHT, TOP_DOWN, ZIG_ZAG
+        LEFT_RIGHT, TOP_DOWN, ZIG_ZAG_LEFT_RIGHT, ZIG_ZAG_TOP_DOWN
     }
 
     /** Type of search that will follow the agent */
-    public static SearchType SEARCH_TYPE = SearchType.ZIG_ZAG;
+    public static SearchType SEARCH_TYPE = SearchType.ZIG_ZAG_TOP_DOWN;
 
     public static final Term ns = Literal.parseLiteral("next(slot)");
     public static final Term pg = Literal.parseLiteral("pick(garb)");
@@ -174,14 +174,17 @@ public class MarsEnv extends Environment {
             case LEFT_RIGHT:
                 topDownSearch(0);
                 break;
-            case ZIG_ZAG:
+            case ZIG_ZAG_LEFT_RIGHT:
+                zigZagLeftRightSearch(0);
+                break;
+            case ZIG_ZAG_TOP_DOWN:
             default:
-                zigZagSearch(0);
+                zigZagTopDownSearch(0);
                 break;
             }
 
             setAgPos(1, getAgPos(1)); // just to draw it in the view
-            
+
         }
 
         private void leftRightSearch(int ag) {
@@ -221,7 +224,7 @@ public class MarsEnv extends Environment {
 
         }
 
-        private void zigZagSearch(int ag) {
+        private void zigZagLeftRightSearch(int ag) {
 
             Location pos = getAgPos(ag);
 
@@ -244,6 +247,38 @@ public class MarsEnv extends Environment {
             }
 
             if (pos.y == getHeight()) {
+                pos.x = 0;
+                pos.y = 0;
+                reverse = false;
+            }
+
+            setAgPos(ag, pos);
+
+        }
+
+        private void zigZagTopDownSearch(int ag) {
+
+            Location pos = getAgPos(ag);
+
+            if (reverse) {
+                // Check if it reached the extreme
+                if (pos.y == 0) {
+                    reverse = false;
+                    pos.x++;
+                } else {
+                    pos.y--;
+                }
+            } else {
+                // Check if it reached the extreme
+                if (pos.y == getHeight() - 1) {
+                    reverse = true;
+                    pos.x++;
+                } else {
+                    pos.y++;
+                }
+            }
+
+            if (pos.x == getHeight()) {
                 pos.x = 0;
                 pos.y = 0;
                 reverse = false;
