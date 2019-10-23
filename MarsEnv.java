@@ -20,6 +20,13 @@ public class MarsEnv extends Environment {
     /** Amount of garbage to add to the environment */
     public static final int GARB_AMOUNT = 5;
 
+    enum SearchType {
+        LEFT_RIGHT, TOP_DOWN, ZIG_ZAG
+    }
+
+    /** Type of search that will follow the agent */
+    public static SearchType SEARCH_TYPE = SearchType.ZIG_ZAG;
+
     public static final Term ns = Literal.parseLiteral("next(slot)");
     public static final Term pg = Literal.parseLiteral("pick(garb)");
     public static final Term dg = Literal.parseLiteral("drop(garb)");
@@ -159,10 +166,22 @@ public class MarsEnv extends Environment {
         }
 
         void nextSlot() throws Exception {
-            // leftRightSearch(0);
-            // topDownSearch(0);
-            zigZagSearch(0);
+
+            switch (SEARCH_TYPE) {
+            case TOP_DOWN:
+                leftRightSearch(0);
+                break;
+            case LEFT_RIGHT:
+                topDownSearch(0);
+                break;
+            case ZIG_ZAG:
+            default:
+                zigZagSearch(0);
+                break;
+            }
+
             setAgPos(1, getAgPos(1)); // just to draw it in the view
+            
         }
 
         private void leftRightSearch(int ag) {
