@@ -49,7 +49,7 @@ public class MarsEnv extends Environment {
             } else if (action.getFunctor().equals("move_towards")) {
                 int x = (int) ((NumberTerm) action.getTerm(0)).solve();
                 int y = (int) ((NumberTerm) action.getTerm(1)).solve();
-                model.moveTowards(x, y);
+                model.moveTowards(0, x, y);
             } else if (action.equals(pg)) {
                 model.pickGarb();
             } else if (action.equals(dg)) {
@@ -102,6 +102,8 @@ public class MarsEnv extends Environment {
 
         /** Number of tries of burning garb */
         int nBurnErr = 0;
+
+        boolean reverse = false;
 
         Random random = new Random(System.currentTimeMillis());
 
@@ -158,7 +160,8 @@ public class MarsEnv extends Environment {
 
         void nextSlot() throws Exception {
             // leftRightSearch(0);
-            topDownSearch(0);
+            // topDownSearch(0);
+            zigZagSearch(0);
             setAgPos(1, getAgPos(1)); // just to draw it in the view
         }
 
@@ -199,18 +202,57 @@ public class MarsEnv extends Environment {
 
         }
 
-        void moveTowards(int x, int y) throws Exception {
-            Location r1 = getAgPos(0);
-            if (r1.x < x)
-                r1.x++;
-            else if (r1.x > x)
-                r1.x--;
-            if (r1.y < y)
-                r1.y++;
-            else if (r1.y > y)
-                r1.y--;
-            setAgPos(0, r1);
+        private void zigZagSearch(int ag) {
+
+            Location pos = getAgPos(ag);
+
+            if (reverse) {
+                // Check if it reached the extreme
+                if (pos.x == 0) {
+                    reverse = false;
+                    pos.y++;
+                } else {
+                    pos.x--;
+                }
+            } else {
+                // Check if it reached the extreme
+                if (pos.x == getWidth() - 1) {
+                    reverse = true;
+                    pos.y++;
+                } else {
+                    pos.x++;
+                }
+            }
+
+            if (pos.y == getHeight()) {
+                pos.x = 0;
+                pos.y = 0;
+                reverse = false;
+            }
+
+            setAgPos(ag, pos);
+
+        }
+
+        void moveTowards(int ag, int x, int y) throws Exception {
+
+            Location pos = getAgPos(ag);
+
+            if (pos.x < x) {
+                pos.x++;
+            } else if (pos.x > x) {
+                pos.x--;
+            }
+
+            if (pos.y < y) {
+                pos.y++;
+            } else if (pos.y > y) {
+                pos.y--;
+            }
+
+            setAgPos(ag, pos);
             setAgPos(1, getAgPos(1)); // just to draw it in the view
+
         }
 
         void pickGarb() {
