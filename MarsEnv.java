@@ -111,7 +111,7 @@ public class MarsEnv extends Environment {
 
         public static final int MErr = 20; // max error in pick garb and burn garb
         int nerr; // number of tries of pick garb
-        int burnerror; // number of tries to burn trash
+        int burnError; // number of tries to burn trash
         boolean r1HasGarb = false; // whether r1 is carrying garbage or not
 
         /** Number of tries of burning garb */
@@ -194,17 +194,21 @@ public class MarsEnv extends Environment {
         }
 
         void nextSlotR3() throws Exception {
+           
             Location r3 = getAgPos(2);
-            int row = ThreadLocalRandom.current().nextInt(0, 3);
-            int column = ThreadLocalRandom.current().nextInt(0, 3);
+            int row = randomNumber(0, 3);
+            int column = randomNumber(0, 3);
+            
             moveChoice(row, column, r3);
             // 25% of droping garbage
-            if (ThreadLocalRandom.current().nextInt(0, 10) == 0) {
+            if (randomNumber(0, 10) == 0) {
                 add(GARB, r3);
             }
+
             setAgPos(0, getAgPos(0));
             setAgPos(1, getAgPos(1)); // just to draw it in the view
             setAgPos(2, r3);
+
         }
 
         // r3 agents move decision
@@ -394,11 +398,11 @@ public class MarsEnv extends Environment {
         void burnGarb() {
             // r2 location has garbage
             if (model.hasObject(GARB, getAgPos(1))) {
-                if (random.nextBoolean() || burnerror == MErr) {
+                if (random.nextBoolean() || burnError == MErr) {
                     remove(GARB, getAgPos(1));
-                    burnerror = 0;
+                    burnError = 0;
                 } else {
-                    burnerror++;
+                    burnError++;
                 }
             }
         }
