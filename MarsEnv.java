@@ -446,8 +446,8 @@ public class MarsEnv extends Environment {
             if (id == 0) {
                 c = Color.yellow;
                 // if (((MarsModel) model).r1HasGarb) {
-                //     label += " - G";
-                //     c = Color.orange;
+                // label += " - G";
+                // c = Color.orange;
                 // }
             }
             if (id == 3) {

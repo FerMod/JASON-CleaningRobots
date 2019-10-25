@@ -40,4 +40,4 @@ at(P) :- pos(P,X,Y) & pos(r4,X,Y).
    <- move_towards(X,Y);
       !at(L).
 +!at(L) <- !at(L).
-		   
+         
