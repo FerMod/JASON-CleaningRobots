@@ -34,6 +34,7 @@ public class MarsEnv extends Environment {
     public static final Term bg = Literal.parseLiteral("burn(garb)");
     public static final Literal g1 = Literal.parseLiteral("garbage(r1)");
     public static final Literal g2 = Literal.parseLiteral("garbage(r2)");
+    public static final Literal g4 = Literal.parseLiteral("garbage(r4)");
 
     static Logger logger = Logger.getLogger(MarsEnv.class.getName());
 
@@ -90,14 +91,17 @@ public class MarsEnv extends Environment {
         Location r1Loc = model.getAgPos(0);
         Location r2Loc = model.getAgPos(1);
         Location r3Loc = model.getAgPos(2);
+        Location r4Loc = model.getAgPos(3);
 
         Literal pos1 = Literal.parseLiteral("pos(r1," + r1Loc.x + "," + r1Loc.y + ")");
         Literal pos2 = Literal.parseLiteral("pos(r2," + r2Loc.x + "," + r2Loc.y + ")");
         Literal pos3 = Literal.parseLiteral("pos(r3," + r3Loc.x + "," + r3Loc.y + ")");
+        Literal pos4 = Literal.parseLiteral("pos(r4," + r4Loc.x + "," + r4Loc.y + ")");
 
         addPercept(pos1);
         addPercept(pos2);
         addPercept(pos3);
+        addPercept(pos4);
 
         if (model.hasObject(GARB, r1Loc)) {
             addPercept(g1);
@@ -105,11 +109,14 @@ public class MarsEnv extends Environment {
         if (model.hasObject(GARB, r2Loc)) {
             addPercept(g2);
         }
+        if (model.hasObject(GARB, r4Loc)) {
+            addPercept(g4);
+        }
     }
 
     class MarsModel extends GridWorldModel {
 
-        public static final int MErr = 20; // max error in pick garb and burn garb
+        public static final int MErr = 3; // max error in pick garb and burn garb
         int nerr; // number of tries of pick garb
         int burnError; // number of tries to burn trash
         boolean r1HasGarb = false; // whether r1 is carrying garbage or not
@@ -122,7 +129,7 @@ public class MarsEnv extends Environment {
         Random random = new Random(System.currentTimeMillis());
 
         private MarsModel() {
-            super(GSize, GSize, 3);
+            super(GSize, GSize, 4);
 
             // initial location of agents
             try {
@@ -141,6 +148,8 @@ public class MarsEnv extends Environment {
                 y = randomNumber(0, GSize - 1);
                 Location r3Loc = new Location(x, y);
                 setAgPos(2, r3Loc);
+
+                setAgPos(3, r2Loc);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -189,25 +198,21 @@ public class MarsEnv extends Environment {
                 break;
             }
 
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
-
         }
 
         void nextSlotR3() throws Exception {
-           
+
             Location r3 = getAgPos(2);
             int row = randomNumber(0, 3);
             int column = randomNumber(0, 3);
-            
+
             moveChoice(row, column, r3);
             // 25% of droping garbage
             if (randomNumber(0, 10) == 0) {
                 add(GARB, r3);
             }
 
-            setAgPos(0, getAgPos(0));
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
-            setAgPos(2, r3);
+            updateAgentPos(2, r3);
 
         }
 
@@ -258,9 +263,7 @@ public class MarsEnv extends Environment {
                 pos.y = 0;
             }
 
-            setAgPos(0, pos);
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
-            setAgPos(2, getAgPos(2));
+            updateAgentPos(0, pos);
 
         }
 
@@ -278,9 +281,7 @@ public class MarsEnv extends Environment {
                 pos.x = 0;
             }
 
-            setAgPos(0, pos);
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
-            setAgPos(2, getAgPos(2));
+            updateAgentPos(0, pos);
 
         }
 
@@ -312,9 +313,7 @@ public class MarsEnv extends Environment {
                 reverse = false;
             }
 
-            setAgPos(0, pos);
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
-            setAgPos(2, getAgPos(2));
+            updateAgentPos(0, pos);
 
         }
 
@@ -346,15 +345,13 @@ public class MarsEnv extends Environment {
                 reverse = false;
             }
 
-            setAgPos(0, pos);
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
-            setAgPos(2, getAgPos(2));
+            updateAgentPos(0, pos);
 
         }
 
         void moveTowards(int x, int y) throws Exception {
 
-            Location pos = getAgPos(0);
+            Location pos = getAgPos(3);
 
             if (pos.x < x) {
                 pos.x++;
@@ -368,18 +365,17 @@ public class MarsEnv extends Environment {
                 pos.y--;
             }
 
-            setAgPos(0, pos);
-            setAgPos(1, getAgPos(1)); // just to draw it in the view
-            setAgPos(2, getAgPos(2));
+            updateAgentPos(3, pos);
+
         }
 
         void pickGarb() {
-            // r1 location has garbage
-            if (model.hasObject(GARB, getAgPos(0))) {
+            // r3 location has garbage
+            if (getAgPos(1) != getAgPos(3) && model.hasObject(GARB, getAgPos(3))) {
                 // sometimes the "picking" action doesn't work
                 // but never more than MErr times
                 if (random.nextBoolean() || nerr == MErr) {
-                    remove(GARB, getAgPos(0));
+                    remove(GARB, getAgPos(3));
                     nerr = 0;
                     r1HasGarb = true;
                 } else {
@@ -391,7 +387,7 @@ public class MarsEnv extends Environment {
         void dropGarb() {
             if (r1HasGarb) {
                 r1HasGarb = false;
-                add(GARB, getAgPos(0));
+                add(GARB, getAgPos(3));
             }
         }
 
@@ -406,6 +402,22 @@ public class MarsEnv extends Environment {
                 }
             }
         }
+
+        private void updateAgentPos(int ag, Location pos) {
+
+            int numAg = getNbOfAgs();
+            for (int i = 0; i < numAg; i++) {
+
+                if (i == ag) {
+                    setAgPos(ag, pos);
+                } else {
+                    setAgPos(i, getAgPos(i));
+                }
+
+            }
+
+        }
+
     }
 
     class MarsView extends GridWorldView {
@@ -432,6 +444,13 @@ public class MarsEnv extends Environment {
             String label = "R" + (id + 1);
             c = Color.blue;
             if (id == 0) {
+                c = Color.yellow;
+                // if (((MarsModel) model).r1HasGarb) {
+                //     label += " - G";
+                //     c = Color.orange;
+                // }
+            }
+            if (id == 3) {
                 c = Color.yellow;
                 if (((MarsModel) model).r1HasGarb) {
                     label += " - G";

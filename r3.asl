@@ -13,4 +13,3 @@
 +!move 
    <- nextr3(slot);
       !move.
-
