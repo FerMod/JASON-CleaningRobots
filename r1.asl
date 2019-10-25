@@ -10,30 +10,32 @@ at(P) :- pos(P,X,Y) & pos(r1,X,Y).
 
 /* Plans */
 
-+!check(slots) : not garbage(r1)
++!check(slots) : not garbage(r1) & not sleep(r1)
    <- next(slot);
       !check(slots).
 +!check(slots).
 
 
++wakeup(r1,X,Y) 
+   <- -+pos(last,X,Y);
+      !at(last);
+      resume(r1);
+      !check(slots).
+
 @lg[atomic]
-+garbage(r1) : not .desire(carry_to(r2))
++garbage(r1) : not .desire(carry_to(r2)) & not sleep(r1)
    <- !carry_to(r2).
+   
 
 +!carry_to(R): pos(r1,X,Y)
-   <- // remember where to go back
-      -+pos(last,X,Y);
+   <- // carry garbage to r2
+      !take(garb,R,X,Y).
 
-      // carry garbage to r2
-      !take(garb,R);
-
-      // goes back and continue to check
-      !at(last);
-      !check(slots).
 +!carry_to(R) <- !carry_to(R).
 
-+!take(S,L) : true
++!take(S,L,X,Y) : true
    <- !ensure_pick(S);
+      awake(X,Y);
       !at(L);
       drop(S).
 
@@ -47,4 +49,3 @@ at(P) :- pos(P,X,Y) & pos(r1,X,Y).
    <- move_towards(X,Y);
       !at(L).
 +!at(L) <- !at(L).
-		   
